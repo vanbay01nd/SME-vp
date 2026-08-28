@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SME Connect Task Manager",
+  title: "SME Connect — Enterprise Workspace Pro",
   description:
-    "Điều phối Lead Task, Activity, hiệu suất cuộc gọi và tra cứu nhà thầu dành cho SME Tây Ninh.",
+    "Trung tâm điều phối công việc Lead Task, quản lý Activity và phân tích hiệu suất khách hàng doanh nghiệp.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

@@ -25,7 +25,7 @@ export const DISCLAIMER_SECTIONS: DisclaimerSection[] = [
     title: "3. BẢO MẬT THÔNG TIN",
     items: [
       "Bạn phải có trách nhiệm bảo mật Token đăng nhập và không chia sẻ cho bất kỳ ai.",
-      "Bạn phải tuân thủ nghiêm ngặt các quy định về bảo mật thông tin khách hàng của VPBank.",
+      "Bạn phải tuân thủ nghiêm ngặt các quy định về an toàn thông tin và bảo mật dữ liệu khách hàng.",
       "Sử dụng tính năng Privacy Shield (Che thông tin) khi trình chiếu hoặc có người thứ ba quan sát màn hình.",
     ],
   },

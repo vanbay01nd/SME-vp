@@ -49,8 +49,8 @@ test("Privacy Masking Engine: name, CIF, phone, tax ID masking", async () => {
   assert.equal(maskTaxId("0101234567", "partial"), "01******67");
 
   // Staff and Dept
-  assert.equal(maskStaffName("Bẩy Nguyễn Văn", "partial"), "B***");
-  assert.equal(maskDepartment("SME Tây Ninh", "partial"), "SME***");
+  assert.equal(maskStaffName("Nguyễn Văn B", "partial"), "N***");
+  assert.equal(maskDepartment("Phòng KHDN 1", "partial"), "Phò***");
 
   // Master maskField with config
   const customConfig = {

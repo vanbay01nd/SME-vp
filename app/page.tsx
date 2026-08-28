@@ -14,5 +14,5 @@ export default async function Home() {
       ? decodeURIComponent(encodedFullName)
       : encodedFullName;
 
-  return <SmeWorkspace displayName={fullName ?? email ?? "Bẩy Nguyễn Văn"} />;
+  return <SmeWorkspace displayName={fullName ?? email ?? "Chuyên viên SME"} />;
 }

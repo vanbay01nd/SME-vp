@@ -602,7 +602,7 @@ export function ActivityForm({
                           </strong>{" "}
                           cho{" "}
                           <strong>{eligibleTargets.length} Lead Task</strong>{" "}
-                          trực tiếp vào hệ thống SME Connect của VPBank.
+                          trực tiếp vào hệ thống quản lý khách hàng.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

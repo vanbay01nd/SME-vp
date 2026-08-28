@@ -34,14 +34,14 @@ export function useSmeConnection({ displayName, onTasksReceived, onActivityTypes
     ? asText(pick(userProfile, "fullName", "username"), displayName)
     : displayName;
   const profileDepartment = userProfile
-    ? asText(pick(userProfile, "centerName", "departmentName", "departmentCode"), "SME Tây Ninh")
-    : "SME Tây Ninh";
+    ? asText(pick(userProfile, "centerName", "departmentName", "departmentCode"), "Trung tâm Khách hàng SME")
+    : "Trung tâm Khách hàng SME";
   const profileInitials = profileName
     .split(/\s+/)
     .filter(Boolean)
     .slice(-2)
     .map((part) => part[0]?.toUpperCase())
-    .join("") || "BN";
+    .join("") || "SM";
 
   const connect = async (
     tokenOverride?: string,

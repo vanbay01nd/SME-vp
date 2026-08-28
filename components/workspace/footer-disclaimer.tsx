@@ -18,8 +18,8 @@ export function FooterDisclaimer() {
       <div className="flex items-center gap-2 text-center sm:text-left">
         <ShieldCheck className="h-4 w-4 text-muted-foreground/70 shrink-0" />
         <span>
-          Công cụ hỗ trợ nội bộ &middot; Không phải sản phẩm chính thức VPBank &middot; 
-          Token không được lưu &middot; Người dùng chịu trách nhiệm về dữ liệu nhập
+          Công cụ hỗ trợ giao diện làm việc &middot; Token chỉ xử lý tại bộ nhớ cục bộ &middot; 
+          Người dùng tự chịu trách nhiệm về các thao tác dữ liệu
         </span>
       </div>
 

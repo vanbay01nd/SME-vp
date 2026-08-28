@@ -107,7 +107,7 @@ export function ContractorProfile({
               <h2>{displayName(asText(pick(contractor, "name", "contractorName"), "Doanh nghiệp"))}</h2>
               <p>
                 MST: {displayTaxId(contractorTaxId)} &middot;{" "}
-                {asText(pick(contractor, "address", "location", "province"), "Tây Ninh")}
+                {asText(pick(contractor, "address", "location", "province"), "Việt Nam")}
               </p>
             </div>
             <div className="contractor-quick-badges">
