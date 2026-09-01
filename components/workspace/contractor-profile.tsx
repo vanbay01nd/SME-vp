@@ -7,8 +7,6 @@ import {
   BriefcaseBusiness,
   Search,
   SearchCheck,
-  TrendingUp,
-  UsersRound,
   Building2,
   MapPin,
   LoaderCircle,
@@ -16,7 +14,7 @@ import {
 } from "lucide-react";
 import { JsonRecord } from "@/lib/constants";
 import { pick, asText } from "@/lib/task-mapper";
-import { formatCount, formatRate, summarizeComplex } from "@/lib/formatters";
+import { formatCount, formatRate } from "@/lib/formatters";
 
 export interface ContractorProfileProps {
   contractorTaxId: string;

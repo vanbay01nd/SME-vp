@@ -593,6 +593,7 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
               performanceBusy={performance.performanceBusy}
               connected={connection.connected}
               setConnectionOpen={connection.setConnectionOpen}
+              mask={(val, field) => mask(val, field)}
             />
           )}
 

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test, { after } from "node:test";
+import fs from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 
@@ -99,3 +101,94 @@ test("Disclaimer & Tips: contents and validity", async () => {
   assert.ok(typeof getRandomTip() === "string");
   assert.ok(typeof getDailyTip() === "string");
 });
+
+test("CSS Classes & 4-Breakpoint Responsive System", () => {
+  const cssPath = path.join(root, "app", "globals.css");
+  const css = fs.readFileSync(cssPath, "utf-8");
+
+  const requiredClasses = [
+    ".customer-cell",
+    ".company-icon",
+    ".cell-sub",
+    ".source-cell",
+    ".status-dot",
+    ".due-now",
+    ".due",
+    ".priority",
+    ".empty-table",
+    ".check-col",
+    ".detail-kicker",
+    ".detail-card",
+    ".batch-summary",
+    ".lead-360",
+    ".lead-360-heading",
+    ".lead-meta-grid",
+    ".lead-context-grid",
+    ".timeline-card",
+    ".context-title",
+    ".timeline-item",
+    ".context-empty",
+    ".context-loading",
+    ".activity-form-panel",
+    ".panel-subhead",
+    ".picker-label",
+    ".note-footer",
+    ".draft-tag",
+    ".personalize-toggle",
+    ".process-progress-strip",
+    ".submit-section",
+    ".tip-banner",
+    ".footer-disclaimer",
+    ".connection-sheet",
+    ".connection-header",
+    ".connection-title-row",
+    ".connection-title-icon",
+    ".sheet-form",
+    ".security-note",
+    ".connection-tabs",
+    ".credential-card",
+    ".method-heading",
+    ".identity-grid",
+    ".credential-error",
+    ".mobile-token-card",
+    ".token-steps",
+    ".fallback-connect-card",
+    ".audit-panel",
+    ".audit-filter-bar",
+    ".audit-filter-buttons",
+    ".audit-filter-active",
+    ".audit-customer",
+    ".audit-warning",
+    ".audit-error",
+    ".compact-empty",
+    ".audit-mobile-list",
+    ".audit-desktop-table",
+    ".search-wrap",
+    ".contractor-card-header",
+    ".contractor-chip",
+    ".contractor-quick-badges",
+    ".bid-overview-summary",
+    ".contractor-packages-section",
+    ".contractor-stat-grid",
+    ".package-list",
+    ".package-item",
+    ".package-meta",
+  ];
+
+  for (const cls of requiredClasses) {
+    assert.ok(
+      css.includes(cls),
+      `Expected globals.css to contain class "${cls}"`,
+    );
+  }
+
+  assert.ok(css.includes("@media (max-width: 1280px)"), "Missing 1280px breakpoint");
+  assert.ok(css.includes("@media (max-width: 1024px)"), "Missing 1024px breakpoint");
+  assert.ok(css.includes("@media (max-width: 768px)"), "Missing 768px breakpoint");
+  assert.ok(css.includes("@media (max-width: 480px)"), "Missing 480px breakpoint");
+
+  assert.ok(css.includes("safe-area-inset-bottom"), "Missing safe-area-inset support");
+  assert.ok(css.includes("pointer: coarse"), "Missing touch media query");
+  assert.ok(css.includes("prefers-reduced-motion"), "Missing accessibility reduced motion query");
+});
+

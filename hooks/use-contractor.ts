@@ -19,8 +19,9 @@ export function useContractor({ token, connected }: { token: string; connected: 
       ].slice(0, 8)
     : [];
 
-  const lookupContractor = async (value: string = contractorTaxId, onUnconnected?: () => void) => {
-    const businessNumber = value.trim().replaceAll(" ", "");
+  const lookupContractor = async (value: unknown = contractorTaxId, onUnconnected?: () => void) => {
+    const rawVal = typeof value === "string" ? value : contractorTaxId;
+    const businessNumber = (rawVal || "").trim().replaceAll(" ", "");
     if (!connected || !token) {
       if (onUnconnected) onUnconnected();
       toast.info("Kết nối SME Connect để tra cứu dữ liệu nhà thầu thật.");

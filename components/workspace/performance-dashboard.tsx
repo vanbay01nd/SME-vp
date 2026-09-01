@@ -38,6 +38,7 @@ export interface PerformanceDashboardProps {
   loadPerformance: () => void;
   performanceBusy: boolean;
   setConnectionOpen?: (open: boolean) => void;
+  mask?: (value: string, field: "customerName" | "cif" | "phone" | "taxId") => string;
 }
 
 export function PerformanceDashboard({
@@ -50,6 +51,7 @@ export function PerformanceDashboard({
   loadPerformance,
   performanceBusy,
   setConnectionOpen,
+  mask,
 }: PerformanceDashboardProps) {
   if (!connected) {
     return (
@@ -273,7 +275,7 @@ export function PerformanceDashboard({
                       </TableCell>
                       <TableCell>
                         <strong className="audit-customer">
-                          {maskField(item.customer, "customerName", DEFAULT_PRIVACY_CONFIG)}
+                          {mask ? mask(item.customer, "customerName") : item.customer}
                         </strong>
                         <small className="cell-sub">{item.note}</small>
                       </TableCell>

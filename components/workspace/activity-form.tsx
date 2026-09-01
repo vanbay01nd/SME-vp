@@ -9,18 +9,12 @@ import {
   History,
   Activity,
   WandSparkles,
-  ShieldCheck,
   FileClock,
-  RotateCcw,
-  X,
   Copy,
   CircleAlert,
-  ClipboardCheck,
   BadgeCheck,
-  KeyRound,
   CheckCircle2,
   LoaderCircle,
-  Building2,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
