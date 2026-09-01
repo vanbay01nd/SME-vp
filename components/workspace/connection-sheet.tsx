@@ -79,7 +79,7 @@ export function ConnectionSheet({
 }: ConnectionSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="connection-sheet sm:max-w-md">
+      <SheetContent className="connection-sheet sm:max-w-lg">
         <SheetHeader className="connection-header">
           <div className="connection-title-row">
             <span className="connection-title-icon">

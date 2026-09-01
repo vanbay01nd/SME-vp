@@ -25,6 +25,32 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1029,10 +1055,26 @@ button, input, select, textarea {
 /* ==========================================================================
    CONNECTION SHEET & MODALS
    ========================================================================== */
+[data-slot="sheet-overlay"] {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  z-index: 50 !important;
+}
+
+[data-slot="sheet-content"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.22) !important;
+  border-left: 1px solid #e2e8f0 !important;
+  z-index: 51 !important;
+}
+
 .connection-sheet {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: #ffffff !important;
 }
 
 .connection-header {
@@ -1101,8 +1143,9 @@ button, input, select, textarea {
   grid-template-columns: repeat(3, 1fr);
   background: #f1f5f9;
   border-radius: 10px;
-  padding: 3px;
+  padding: 4px;
   height: auto;
+  gap: 4px;
 }
 
 .connection-tabs button {
@@ -1112,8 +1155,24 @@ button, input, select, textarea {
   align-items: center;
   gap: 6px;
   justify-content: center;
-  padding: 7px;
-  border-radius: 7px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: #64748b;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.connection-tabs button:hover {
+  color: #0f172a;
+}
+
+.connection-tabs button[data-state="active"] {
+  background: #ffffff;
+  color: #064e3b;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .credential-card,
@@ -1122,24 +1181,25 @@ button, input, select, textarea {
 .fallback-connect-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  background: #f8fafc;
+  gap: 14px;
+  padding: 16px;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 12.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .method-heading {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .method-heading span {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   background: #ecfdf5;
   color: #047857;
@@ -1152,32 +1212,36 @@ button, input, select, textarea {
   display: block;
   font-size: 13px;
   color: #0f172a;
+  font-weight: 700;
 }
 
 .method-heading p {
   margin: 2px 0 0;
   font-size: 11.5px;
   color: #64748b;
+  line-height: 1.4;
 }
 
 .identity-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 .identity-grid label,
 .credential-card label,
 .fallback-connect-card label {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 12px;
-  font-weight: 500;
-  color: #475569;
+  font-weight: 600;
+  color: #334155;
+  text-align: left;
 }
 
 .identity-grid label small {
-  font-size: 10.5px;
+  font-size: 11px;
   color: #94a3b8;
   font-weight: 400;
 }
@@ -1428,6 +1492,7 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: #ffffff !important;
 }
 
 .detail-body {
