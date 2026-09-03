@@ -378,8 +378,8 @@ export function ActivityForm({
                 </div>
 
                 <div className="form-grid">
-                  <label>
-                    Loại hoạt động
+                  <div className="form-field">
+                    <span className="field-label">Loại hoạt động</span>
                     <Select
                       value={activityTypeId}
                       onValueChange={(val) => void selectActivityType(val)}
@@ -395,10 +395,10 @@ export function ActivityForm({
                         ))}
                       </SelectContent>
                     </Select>
-                  </label>
+                  </div>
 
-                  <label>
-                    Kết quả hoạt động
+                  <div className="form-field">
+                    <span className="field-label">Kết quả hoạt động</span>
                     <Select
                       value={activityResultId}
                       onValueChange={setActivityResultId}
@@ -421,7 +421,7 @@ export function ActivityForm({
                         ))}
                       </SelectContent>
                     </Select>
-                  </label>
+                  </div>
                 </div>
 
                 {/* Templates */}

@@ -1508,6 +1508,66 @@ button, input, select, textarea {
   margin: 14px 0;
 }
 
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* Select Portals & Dropdowns */
+[data-slot="select-content"] {
+  z-index: 99999 !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+[data-slot="select-item"] {
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  color: #1e293b !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: background-color 0.12s ease !important;
+}
+
+[data-slot="select-item"]:hover,
+[data-slot="select-item"]:focus,
+[data-slot="select-item"][data-highlighted] {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  outline: none !important;
+}
+
+[data-slot="select-trigger"] {
+  width: 100% !important;
+  height: 40px !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  color: #0f172a !important;
+  cursor: pointer !important;
+}
+
+[data-slot="select-trigger"]:focus {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+}
+
 .template-chips {
   display: flex;
   flex-wrap: wrap;
