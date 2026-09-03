@@ -257,14 +257,36 @@ export async function POST(request: Request) {
       );
     }
 
-    const sessionCookies = await bootstrapLoginSession();
-    const loginResult = await upstream("/auth/login", {
+    let sessionCookies = await bootstrapLoginSession();
+    let loginResult = await upstream("/auth/login", {
       method: "POST",
       cookies: sessionCookies,
       body: { username, password },
     });
-    const loginBody = asRecord(loginResult.data);
+    let loginBody = asRecord(loginResult.data);
     let token = String(loginBody.token ?? "").trim();
+
+    // Fallback: nếu mật khẩu có khoảng trắng thừa do copy-paste, thử lại với mật khẩu đã trim
+    if (
+      (loginResult.status < 200 || loginResult.status >= 300 || !token)
+      && password.trim() !== password
+      && password.trim().length > 0
+    ) {
+      loginResult = await upstream("/auth/login", {
+        method: "POST",
+        cookies: sessionCookies,
+        body: { username, password: password.trim() },
+      });
+      loginBody = asRecord(loginResult.data);
+      token = String(loginBody.token ?? "").trim();
+    }
+
+    if (loginResult.status < 200 || loginResult.status >= 300) {
+      console.warn(
+        `[sme-login] FAILED username="${username}", pwdLen=${password.length}, status=${loginResult.status}, data=`,
+        loginResult.data,
+      );
+    }
 
     if (loginResult.status >= 500) {
       return Response.json(
@@ -281,8 +303,14 @@ export async function POST(request: Request) {
       || /[\r\n]/.test(token)
     ) {
       recordFailure(attemptKey);
+      const serverMessage =
+        typeof loginBody.message === "string" && loginBody.message.trim()
+          ? loginBody.message.trim()
+          : typeof loginBody.responseMessage === "string" && loginBody.responseMessage.trim()
+            ? loginBody.responseMessage.trim()
+            : "Sai tài khoản, mật khẩu hoặc SME Connect từ chối đăng nhập.";
       return Response.json(
-        { error: "Sai tài khoản, mật khẩu hoặc SME Connect từ chối đăng nhập." },
+        { error: serverMessage },
         { status: 401, headers: noStoreHeaders },
       );
     }

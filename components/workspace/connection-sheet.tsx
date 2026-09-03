@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   KeyRound,
   ShieldCheck,
@@ -13,6 +14,8 @@ import {
   BadgeCheck,
   Unplug,
   LoaderCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +80,8 @@ export function ConnectionSheet({
   pasteTokenFromClipboard,
   pasteAndConnect,
 }: ConnectionSheetProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="connection-sheet sm:max-w-lg">
@@ -161,14 +166,26 @@ export function ConnectionSheet({
                 </div>
                 <label>
                   Mật khẩu SME Connect
-                  <Input
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    type="password"
-                    name="password"
-                    placeholder="Nhập mật khẩu"
-                    autoComplete="current-password"
-                  />
+                  <div className="relative flex items-center">
+                    <Input
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="Nhập mật khẩu"
+                      autoComplete="current-password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors p-1"
+                      title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </label>
                 <Button
                   type="submit"
