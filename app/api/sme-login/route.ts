@@ -2,6 +2,8 @@ const SME_ADMIN_API =
   "https://smeconnect.vpbank.com.vn/tai-khoan-doanh-nghiep/smeca-admin/api";
 const SME_ORIGIN = "https://smeconnect.vpbank.com.vn";
 const SME_LOGIN_PAGE = `${SME_ORIGIN}/digitalgate/login`;
+const BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
 
 type JsonRecord = Record<string, unknown>;
 type Attempt = { count: number; resetAt: number };
@@ -20,6 +22,38 @@ function asRecord(value: unknown): JsonRecord {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as JsonRecord)
     : {};
+}
+
+function isAllowedOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+
+  try {
+    const originUrl = new URL(origin);
+    const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+    const requestUrl = new URL(request.url);
+
+    if (originUrl.origin === requestUrl.origin) return true;
+    if (host && originUrl.host === host) return true;
+
+    const hostname = originUrl.hostname.toLowerCase();
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("172.") ||
+      hostname.endsWith(".ngrok-free.app") ||
+      hostname.endsWith(".trycloudflare.com") ||
+      hostname.endsWith(".loca.lt")
+    ) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 function cleanUsername(value: unknown) {
@@ -98,6 +132,7 @@ async function upstream(
         Accept: "application/json",
         "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8",
         Referer: SME_LOGIN_PAGE,
+        "User-Agent": BROWSER_USER_AGENT,
         "X-Requested-With": "XMLHttpRequest",
         ...(options.method === "POST" ? { Origin: SME_ORIGIN } : {}),
         ...(options.token
@@ -147,6 +182,7 @@ async function bootstrapLoginSession() {
       headers: {
         Accept: "text/html,application/xhtml+xml",
         "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8",
+        "User-Agent": BROWSER_USER_AGENT,
       },
       cache: "no-store",
       redirect: "follow",
@@ -158,6 +194,16 @@ async function bootstrapLoginSession() {
   } finally {
     clearTimeout(timer);
   }
+}
+
+function membershipFromLoginBody(loginBody: JsonRecord): string {
+  if (Array.isArray(loginBody.roleInDepartmentList) && loginBody.roleInDepartmentList.length > 0) {
+    const list = loginBody.roleInDepartmentList as JsonRecord[];
+    const defaultRole = list.find((item) => item.isDefault === true) || list[0];
+    const mId = String(asRecord(defaultRole).membershipId ?? "").trim();
+    if (/^\d{1,20}$/.test(mId)) return mId;
+  }
+  return "";
 }
 
 function membershipFromProfile(profile: JsonRecord) {
@@ -175,13 +221,7 @@ function profileMemberships(profile: JsonRecord) {
 
 export async function POST(request: Request) {
   try {
-    const fetchSite = request.headers.get("sec-fetch-site");
-    const origin = request.headers.get("origin");
-    const requestOrigin = new URL(request.url).origin;
-    if (
-      (fetchSite && fetchSite !== "same-origin")
-      || (origin && origin !== requestOrigin)
-    ) {
+    if (!isAllowedOrigin(request)) {
       return Response.json(
         { error: "Yêu cầu đăng nhập không hợp lệ." },
         { status: 403, headers: noStoreHeaders },
@@ -256,9 +296,10 @@ export async function POST(request: Request) {
       profile = asRecord(profileResult.data);
     }
 
-    const currentMembershipId = membershipFromProfile(profile);
+    const loginMembershipId = membershipFromLoginBody(loginBody);
+    const currentMembershipId = membershipFromProfile(profile) || loginMembershipId;
     const availableMemberships = profileMemberships(profile);
-    let resolvedMembershipId = currentMembershipId || requestedMembershipId;
+    let resolvedMembershipId = requestedMembershipId || currentMembershipId;
 
     if (
       requestedMembershipId
