@@ -32,6 +32,7 @@ export function useActivityForm({ token, connected, activityTypes }: {
   const [resultsBusy, setResultsBusy] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [processProgress, setProcessProgress] = useState(0);
+  const [processingStatusText, setProcessingStatusText] = useState("");
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [draftUpdatedAt, setDraftUpdatedAt] = useState("");
 
@@ -195,6 +196,8 @@ export function useActivityForm({ token, connected, activityTypes }: {
     setProcessing,
     processProgress,
     setProcessProgress,
+    processingStatusText,
+    setProcessingStatusText,
     draftAvailable,
     draftUpdatedAt,
     selectActivityType,

@@ -189,90 +189,109 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
       (r) => r.id === activityForm.activityResultId,
     );
 
+    activityForm.setProcessing(true);
+    activityForm.setProcessProgress(0);
+    activityForm.setProcessingStatusText(`Chuẩn bị gửi ${eligible.length} Activity...`);
+
     const entries: AuditEntry[] = [];
     const successfulIds: string[] = [];
 
-    for (let index = 0; index < eligible.length; index += 1) {
-      const task = eligible[index];
-      try {
-        let customerId = task.customerId;
-        if (!customerId) {
-          const detailData = await smeCall(connection.token, {
-            action: "task-detail",
+    try {
+      for (let index = 0; index < eligible.length; index += 1) {
+        const task = eligible[index];
+        const currentPercent = Math.round((index / eligible.length) * 100);
+        activityForm.setProcessProgress(currentPercent);
+        activityForm.setProcessingStatusText(
+          `Đang gửi task ${index + 1}/${eligible.length}: ${task.customer} (#${task.id})`,
+        );
+
+        try {
+          let customerId = task.customerId;
+          if (!customerId) {
+            const detailData = await smeCall(connection.token, {
+              action: "task-detail",
+              taskId: task.id,
+            });
+            const detail = unwrapRecord(detailData);
+            customerId = asText(
+              pick(detail, "customerId", "customer.customerId", "customer.id"),
+              "",
+            );
+          }
+          if (!customerId) throw new Error("Không xác định được customerId.");
+
+          const submissionNote = (batchNotesMap && batchNotesMap[task.id])
+            ? batchNotesMap[task.id]
+            : activityForm.personalizeBatch
+              ? renderNoteTemplate(activityForm.note.trim(), task)
+              : activityForm.note.trim();
+
+          const done = await smeCall(connection.token, {
+            action: "complete",
             taskId: task.id,
+            customerId,
+            activityTypeId: activityForm.activityTypeId,
+            activityResultId: activityForm.activityResultId,
+            note: submissionNote,
           });
-          const detail = unwrapRecord(detailData);
-          customerId = asText(
-            pick(detail, "customerId", "customer.customerId", "customer.id"),
-            "",
-          );
+
+          if (!responseSucceeded(done)) {
+            throw new Error("API không trả về xác nhận activity hợp lệ.");
+          }
+
+          successfulIds.push(task.id);
+          entries.push({
+            taskId: task.id,
+            customer: task.customer,
+            status: "Thành công",
+            activity: selectedType?.label ?? activityForm.activityTypeId,
+            result: selectedResult?.label ?? activityForm.activityResultId,
+            at: new Date().toLocaleString("vi-VN"),
+            verified: true,
+          });
+        } catch (error) {
+          entries.push({
+            taskId: task.id,
+            customer: task.customer,
+            status: "Thất bại",
+            activity: selectedType?.label ?? activityForm.activityTypeId,
+            result: selectedResult?.label ?? activityForm.activityResultId,
+            at: new Date().toLocaleString("vi-VN"),
+            verified: false,
+            message: error instanceof Error ? error.message : "Lỗi không xác định",
+          });
         }
-        if (!customerId) throw new Error("Không xác định được customerId.");
 
-        const submissionNote = (batchNotesMap && batchNotesMap[task.id])
-          ? batchNotesMap[task.id]
-          : activityForm.personalizeBatch
-            ? renderNoteTemplate(activityForm.note.trim(), task)
-            : activityForm.note.trim();
+        const completedPercent = Math.round(((index + 1) / eligible.length) * 100);
+        activityForm.setProcessProgress(completedPercent);
 
-        const done = await smeCall(connection.token, {
-          action: "complete",
-          taskId: task.id,
-          customerId,
-          activityTypeId: activityForm.activityTypeId,
-          activityResultId: activityForm.activityResultId,
-          note: submissionNote,
-        });
-
-        if (!responseSucceeded(done)) {
-          throw new Error("API không trả về xác nhận activity hợp lệ.");
-        }
-
-        successfulIds.push(task.id);
-        entries.push({
-          taskId: task.id,
-          customer: task.customer,
-          status: "Thành công",
-          activity: selectedType?.label ?? activityForm.activityTypeId,
-          result: selectedResult?.label ?? activityForm.activityResultId,
-          at: new Date().toLocaleString("vi-VN"),
-          verified: true,
-        });
-      } catch (error) {
-        entries.push({
-          taskId: task.id,
-          customer: task.customer,
-          status: "Thất bại",
-          activity: selectedType?.label ?? activityForm.activityTypeId,
-          result: selectedResult?.label ?? activityForm.activityResultId,
-          at: new Date().toLocaleString("vi-VN"),
-          verified: false,
-          message: error instanceof Error ? error.message : "Lỗi không xác định",
-        });
+        if (index < eligible.length - 1) await delay(900);
       }
 
-      if (index < eligible.length - 1) await delay(900);
-    }
-
-    audit.addEntries(entries);
-    taskStore.setLiveTasks((current) =>
-      current.map((t) =>
-        successfulIds.includes(t.id) ? { ...t, status: "Đang xử lý" as TaskStatus } : t,
-      ),
-    );
-    taskStore.setSelected((current) =>
-      current.filter((id) => !successfulIds.includes(id)),
-    );
-
-    const failed = entries.length - successfulIds.length;
-    if (failed) {
-      toast.warning(
-        `Hoàn tất ${successfulIds.length}/${entries.length} task. Xem Nhật ký phiên để kiểm tra lỗi.`,
+      audit.addEntries(entries);
+      taskStore.setLiveTasks((current) =>
+        current.map((t) =>
+          successfulIds.includes(t.id) ? { ...t, status: "Đang xử lý" as TaskStatus } : t,
+        ),
       );
-    } else {
-      activityForm.clearActivityDraft(false);
-      toast.success(`Đã tạo activity cho ${successfulIds.length} task.`);
-      closeActionSheet();
+      taskStore.setSelected((current) =>
+        current.filter((id) => !successfulIds.includes(id)),
+      );
+
+      const failed = entries.length - successfulIds.length;
+      if (failed) {
+        toast.warning(
+          `Hoàn tất ${successfulIds.length}/${entries.length} task. Xem Nhật ký phiên để kiểm tra lỗi.`,
+        );
+      } else {
+        activityForm.clearActivityDraft(false);
+        toast.success(`Đã tạo activity cho ${successfulIds.length} task.`);
+        closeActionSheet();
+      }
+    } finally {
+      activityForm.setProcessing(false);
+      activityForm.setProcessProgress(0);
+      activityForm.setProcessingStatusText("");
     }
   };
 
@@ -284,6 +303,32 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
     >
       <main className="workspace-shell">
         <Toaster position="top-right" richColors closeButton />
+
+        {/* Floating Batch Progress Banner */}
+        {activityForm.processing && (
+          <div className="floating-batch-banner">
+            <div className="floating-batch-content">
+              <div className="floating-batch-info">
+                <LoaderCircle className="animate-spin text-emerald-400" size={20} />
+                <div>
+                  <strong>Đang nhập liệu tự động theo lô</strong>
+                  <p>{activityForm.processingStatusText || "Đang xử lý..."}</p>
+                </div>
+              </div>
+              <div className="floating-batch-bar-wrap">
+                <div className="floating-batch-track">
+                  <div
+                    className="floating-batch-fill"
+                    style={{ width: `${activityForm.processProgress}%` }}
+                  />
+                </div>
+                <span className="floating-batch-percent font-mono">
+                  {activityForm.processProgress}%
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Topbar with Navigation, Status Pill, Privacy Shield, and Connection Trigger */}
         <Topbar
@@ -728,6 +773,7 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
           personalizeBatch={activityForm.personalizeBatch}
           setPersonalizeBatch={activityForm.setPersonalizeBatch}
           processProgress={activityForm.processProgress}
+          processingStatusText={activityForm.processingStatusText}
           setConnectionOpen={connection.setConnectionOpen}
           processTargets={processTargets}
           maskCustomer={(val: string) => mask(val, "customerName")}

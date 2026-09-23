@@ -95,6 +95,7 @@ export interface ActivityFormProps {
   setPersonalizeBatch: (val: boolean) => void;
   // Execution
   processProgress: number;
+  processingStatusText?: string;
   setConnectionOpen?: (open: boolean) => void;
   processTargets: (batchNotesMap?: Record<string, string>) => Promise<void>;
   // Privacy
@@ -145,6 +146,7 @@ export function ActivityForm({
   personalizeBatch,
   setPersonalizeBatch,
   processProgress,
+  processingStatusText = "",
   setConnectionOpen,
   processTargets,
   maskCustomer = (v) => maskName(v, "partial"),
@@ -682,11 +684,17 @@ export function ActivityForm({
                 {/* Progress bar during execution */}
                 {processing && (
                   <div className="process-progress-strip">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Đang gửi Activity...</span>
-                      <b>{processProgress}%</b>
+                    <div className="flex justify-between items-center text-xs mb-2 font-semibold">
+                      <span className="flex items-center gap-2 text-emerald-800">
+                        <LoaderCircle className="animate-spin text-emerald-600" size={14} />
+                        {processingStatusText || "Đang tự động gửi Activity theo lô..."}
+                      </span>
+                      <b className="text-emerald-700 text-sm font-bold">{processProgress}%</b>
                     </div>
-                    <Progress value={processProgress} />
+                    <Progress value={processProgress} className="h-2.5 bg-emerald-100" />
+                    <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5">
+                      <Clock3 size={12} className="text-slate-400" /> Khoảng nghỉ 0,9 giây giữa hai yêu cầu để bảo vệ hệ thống VPBank. Vui lòng giữ mở cửa sổ này.
+                    </p>
                   </div>
                 )}
 
