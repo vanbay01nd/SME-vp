@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   UsersRound,
   Phone,
@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   LoaderCircle,
   RefreshCw,
+  Sparkles,
+  Bot,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +54,7 @@ import {
 import { Task, ApiOption, noteVariables } from "@/lib/constants";
 import { noteTemplates, renderNoteTemplate } from "@/lib/note-templates";
 import { maskName, maskCif, maskPhone } from "@/lib/privacy";
+import type { NoteContext, BatchNoteContext } from "@/lib/ai-prompts";
 
 export interface ActivityFormProps {
   actionSheetOpen: boolean;
@@ -92,11 +96,18 @@ export interface ActivityFormProps {
   // Execution
   processProgress: number;
   setConnectionOpen?: (open: boolean) => void;
-  processTargets: () => Promise<void>;
+  processTargets: (batchNotesMap?: Record<string, string>) => Promise<void>;
   // Privacy
   maskCustomer?: (val: string) => string;
   maskPhone?: (val: string) => string;
   maskCif?: (val: string) => string;
+  // AI
+  aiGenerateNote?: (context: NoteContext) => Promise<string>;
+  aiBatchNotes?: (context: BatchNoteContext) => Promise<Array<{ taskId: string; note: string }>>;
+  aiLoading?: boolean;
+  aiError?: string | null;
+  aiText?: string;
+  clearAiText?: () => void;
 }
 
 export function ActivityForm({
@@ -139,10 +150,67 @@ export function ActivityForm({
   maskCustomer = (v) => maskName(v, "partial"),
   maskPhone: maskPhoneProp = (v) => maskPhone(v, "partial"),
   maskCif: maskCifProp = (v) => maskCif(v, "partial"),
+  aiGenerateNote,
+  aiBatchNotes,
+  aiLoading = false,
+  aiError = null,
+  aiText = "",
+  clearAiText,
 }: ActivityFormProps) {
+  const [batchNotesMap, setBatchNotesMap] = useState<Record<string, string>>({});
+  const [batchAiLoading, setBatchAiLoading] = useState(false);
+
   const selectedType = activityTypes.find((t) => t.id === activityTypeId);
   const selectedResult = activityResults.find((r) => r.id === activityResultId);
   const selectedTemplate = noteTemplates.find((t) => t.id === selectedTemplateId);
+
+  // AI: Generate single note
+  const handleAiNote = async () => {
+    if (!aiGenerateNote || !selectedType || !selectedResult) return;
+    try {
+      const context = {
+        activityType: selectedType.label,
+        activityResult: selectedResult.label,
+        customerName: !batchOpen ? actionTargets[0]?.customer : undefined,
+        source: !batchOpen ? actionTargets[0]?.source : undefined,
+        campaign: !batchOpen ? actionTargets[0]?.campaign : undefined,
+        program: !batchOpen ? actionTargets[0]?.program : undefined,
+        recentHistory: taskActivities.length > 0
+          ? `${taskActivities[0].type} → ${taskActivities[0].result}`
+          : undefined,
+      };
+      const text = await aiGenerateNote(context);
+      if (text) setNote(text);
+    } catch {
+      // Error handled by hook
+    }
+  };
+
+  // AI: Generate batch personalized notes
+  const handleAiBatchNotes = async () => {
+    if (!aiBatchNotes || !selectedType || !selectedResult) return;
+    setBatchAiLoading(true);
+    try {
+      const context = {
+        activityType: selectedType.label,
+        activityResult: selectedResult.label,
+        tasks: eligibleTargets.slice(0, 20).map((t) => ({
+          taskId: t.id,
+          customerName: t.customer,
+          source: t.source,
+          campaign: t.campaign,
+        })),
+      };
+      const results = await aiBatchNotes(context);
+      const map: Record<string, string> = {};
+      results.forEach((r) => { map[r.taskId] = r.note; });
+      setBatchNotesMap(map);
+    } catch {
+      // Error handled by hook
+    } finally {
+      setBatchAiLoading(false);
+    }
+  };
 
   // Preflight calculations
   const eligibleTargets = useMemo(
@@ -442,8 +510,71 @@ export function ActivityForm({
                         {t.label}
                       </button>
                     ))}
+                    {/* AI Note Generator Button */}
+                    {aiGenerateNote && (
+                      <button
+                        type="button"
+                        className="ai-btn ai-btn-sm"
+                        onClick={handleAiNote}
+                        disabled={aiLoading || !activityTypeId || !activityResultId}
+                        title="AI tự động viết ghi chú dựa trên context"
+                      >
+                        {aiLoading ? (
+                          <LoaderCircle size={12} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={12} />
+                        )}
+                        AI viết ghi chú
+                      </button>
+                    )}
                   </div>
                 </div>
+
+                {/* AI Batch Notes Button — only in batch mode */}
+                {batchOpen && aiBatchNotes && eligibleTargets.length > 1 && (
+                  <div className="ai-card" style={{ marginTop: 6 }}>
+                    <div className="ai-card-header">
+                      <span><Bot size={13} /> AI Ghi chú cá nhân hóa theo lô</span>
+                      <button
+                        type="button"
+                        className="ai-btn ai-btn-sm"
+                        onClick={handleAiBatchNotes}
+                        disabled={batchAiLoading || !activityTypeId || !activityResultId}
+                      >
+                        {batchAiLoading ? (
+                          <LoaderCircle size={11} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={11} />
+                        )}
+                        {batchAiLoading
+                          ? "Đang tạo..."
+                          : `Tạo ${Math.min(eligibleTargets.length, 20)} ghi chú`}
+                      </button>
+                    </div>
+                    {Object.keys(batchNotesMap).length > 0 && (
+                      <div className="ai-batch-preview">
+                        {eligibleTargets.slice(0, 20).map((t) => (
+                          <div key={t.id} className="ai-batch-item">
+                            <span className="ai-batch-task-id">#{t.id}</span>
+                            <span className="ai-batch-note">
+                              {batchNotesMap[t.id] ?? "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="ai-disclaimer">
+                      <AlertTriangle size={10} /> Nội dung AI chỉ mang tính gợi ý. Vui lòng kiểm tra trước khi gửi.
+                    </p>
+                  </div>
+                )}
+
+                {/* AI Error Display */}
+                {aiError && (
+                  <div className="ai-error">
+                    <AlertTriangle size={13} /> {aiError}
+                  </div>
+                )}
 
                 {/* Note Editor */}
                 <div className="note-section">
@@ -602,7 +733,7 @@ export function ActivityForm({
                       <AlertDialogFooter>
                         <AlertDialogCancel>Xem lại</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => void processTargets()}
+                          onClick={() => void processTargets(batchNotesMap)}
                           className="vp-primary"
                         >
                           Xác nhận gửi

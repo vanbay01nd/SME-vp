@@ -37,6 +37,7 @@ import { useActivityForm } from "@/hooks/use-activity-form";
 import { usePerformance } from "@/hooks/use-performance";
 import { useContractor } from "@/hooks/use-contractor";
 import { useAudit } from "@/hooks/use-audit";
+import { useAi } from "@/hooks/use-ai";
 
 // Workspace Components
 import { DisclaimerGate } from "@/components/workspace/disclaimer-gate";
@@ -123,6 +124,9 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
     onViewChange: () => setView("tasks"),
   });
 
+  // 9. AI Hook
+  const ai = useAi();
+
   const actionTargets = batchOpen
     ? taskStore.sourceTasks.filter((task) => taskStore.selected.includes(task.id))
     : singleTask
@@ -169,7 +173,7 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
     }
   };
 
-  const processTargets = async () => {
+  const processTargets = async (batchNotesMap?: Record<string, string>) => {
     if (!connection.token) {
       toast.error("Chưa có token kết nối.");
       return;
@@ -205,9 +209,11 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
         }
         if (!customerId) throw new Error("Không xác định được customerId.");
 
-        const submissionNote = activityForm.personalizeBatch
-          ? renderNoteTemplate(activityForm.note.trim(), task)
-          : activityForm.note.trim();
+        const submissionNote = (batchNotesMap && batchNotesMap[task.id])
+          ? batchNotesMap[task.id]
+          : activityForm.personalizeBatch
+            ? renderNoteTemplate(activityForm.note.trim(), task)
+            : activityForm.note.trim();
 
         const done = await smeCall(connection.token, {
           action: "complete",
@@ -594,6 +600,11 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
               connected={connection.connected}
               setConnectionOpen={connection.setConnectionOpen}
               mask={(val, field) => mask(val, field)}
+              aiPerformanceInsights={ai.performanceInsights}
+              aiText={ai.aiText}
+              aiLoading={ai.aiLoading}
+              aiError={ai.aiError}
+              clearAiText={ai.clearAiText}
             />
           )}
 
@@ -656,6 +667,11 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
               setSingleTask(task);
             }}
             mask={(val, field) => mask(val, field)}
+            aiLeadBriefing={ai.leadBriefing}
+            aiText={ai.aiText}
+            aiLoading={ai.aiLoading}
+            aiError={ai.aiError}
+            clearAiText={ai.clearAiText}
           />
         )}
 
@@ -717,6 +733,12 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
           maskCustomer={(val: string) => mask(val, "customerName")}
           maskPhone={(val: string) => mask(val, "phone")}
           maskCif={(val: string) => mask(val, "cif")}
+          aiGenerateNote={ai.generateNote}
+          aiBatchNotes={ai.batchNotes}
+          aiLoading={ai.aiLoading}
+          aiError={ai.aiError}
+          aiText={ai.aiText}
+          clearAiText={ai.clearAiText}
         />
 
         {/* Persistent Footer Disclaimer */}

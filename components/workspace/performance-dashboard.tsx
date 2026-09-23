@@ -11,7 +11,14 @@ import {
   BarChart3,
   KeyRound,
   Calendar,
+  Bot,
+  Sparkles,
+  AlertTriangle,
+  LoaderCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -27,6 +34,7 @@ import {
 import { PerformanceSnapshot, callStatusLabels } from "@/lib/constants";
 import { formatCount, formatRate } from "@/lib/formatters";
 import { maskField, DEFAULT_PRIVACY_CONFIG } from "@/lib/privacy";
+import type { PerformanceContext } from "@/lib/ai-prompts";
 
 export interface PerformanceDashboardProps {
   connected: boolean;
@@ -39,6 +47,12 @@ export interface PerformanceDashboardProps {
   performanceBusy: boolean;
   setConnectionOpen?: (open: boolean) => void;
   mask?: (value: string, field: "customerName" | "cif" | "phone" | "taxId") => string;
+  // AI
+  aiPerformanceInsights?: (context: PerformanceContext) => Promise<string>;
+  aiText?: string;
+  aiLoading?: boolean;
+  aiError?: string | null;
+  clearAiText?: () => void;
 }
 
 export function PerformanceDashboard({
@@ -52,7 +66,13 @@ export function PerformanceDashboard({
   performanceBusy,
   setConnectionOpen,
   mask,
+  aiPerformanceInsights,
+  aiText = "",
+  aiLoading = false,
+  aiError = null,
+  clearAiText,
 }: PerformanceDashboardProps) {
+  const [insightsExpanded, setInsightsExpanded] = useState(true);
   if (!connected) {
     return (
       <section className="task-panel audit-panel">
@@ -77,6 +97,24 @@ export function PerformanceDashboard({
     performance && performance.callTotal > 0
       ? formatRate((answeredItem?.count ?? 0) / performance.callTotal)
       : "—";
+
+  const handleInsights = async () => {
+    if (!aiPerformanceInsights || !performance) return;
+    try {
+      await aiPerformanceInsights({
+        doneCount: performance.doneCount,
+        planCount: performance.planCount,
+        callTotal: performance.callTotal,
+        avgCallCountPerDay: performance.avgCallCountPerDay,
+        avgCallDuration: performance.avgCallDuration,
+        answerRate,
+        callStatuses: performance.callStatuses,
+        dateRange: `${reportFrom} đến ${reportTo}`,
+      });
+    } catch {
+      // Error handled by hook
+    }
+  };
 
   return (
     <>
@@ -179,6 +217,57 @@ export function PerformanceDashboard({
               </div>
             </article>
           </section>
+
+          {/* AI Insights Card */}
+          {aiPerformanceInsights && (
+            <div className="ai-card ai-insights-card">
+              <div className="ai-card-header">
+                <span><Bot size={14} /> AI Phân tích hiệu suất thông minh</span>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {!aiText && !aiLoading && (
+                    <button
+                      type="button"
+                      className="ai-btn ai-btn-sm"
+                      onClick={handleInsights}
+                      disabled={aiLoading}
+                    >
+                      <Sparkles size={11} /> Phân tích ngay
+                    </button>
+                  )}
+                  {aiText && (
+                    <button
+                      type="button"
+                      className="ai-btn ai-btn-sm"
+                      onClick={() => setInsightsExpanded(!insightsExpanded)}
+                    >
+                      {insightsExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                      {insightsExpanded ? "Thu gọn" : "Xem phân tích"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {aiLoading && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 0" }}>
+                  <div className="ai-shimmer" style={{ width: "95%" }} />
+                  <div className="ai-shimmer" style={{ width: "80%" }} />
+                  <div className="ai-shimmer" style={{ width: "70%" }} />
+                </div>
+              )}
+              {aiText && insightsExpanded && (
+                <div className={`ai-card-body${aiLoading ? " ai-typewriter" : ""}`}>
+                  {aiText}
+                </div>
+              )}
+              {aiError && (
+                <div className="ai-error">
+                  <AlertTriangle size={12} /> {aiError}
+                </div>
+              )}
+              <p className="ai-disclaimer">
+                <AlertTriangle size={9} /> Phân tích được tạo tự động bởi AI DeepSeek dựa trên số liệu thực tế trong kỳ.
+              </p>
+            </div>
+          )}
 
           <div className="insight-grid">
             <section className="task-panel insight-card">

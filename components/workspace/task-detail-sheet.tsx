@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -18,8 +19,14 @@ import {
   Calendar,
   Sparkles,
   ChevronRight,
+  Bot,
+  LoaderCircle,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Task } from "@/lib/constants";
+import type { BriefingContext } from "@/lib/ai-prompts";
 
 export interface TaskDetailSheetProps {
   task: Task | null;
@@ -33,6 +40,12 @@ export interface TaskDetailSheetProps {
     value: string | undefined | null,
     field: "customerName" | "cif" | "phone" | "taxId",
   ) => string;
+  // AI
+  aiLeadBriefing?: (context: BriefingContext) => Promise<string>;
+  aiText?: string;
+  aiLoading?: boolean;
+  aiError?: string | null;
+  clearAiText?: () => void;
 }
 
 export function TaskDetailSheet({
@@ -43,7 +56,14 @@ export function TaskDetailSheet({
   onOpenContractor,
   onOpenAction,
   mask,
+  aiLeadBriefing,
+  aiText = "",
+  aiLoading = false,
+  aiError = null,
+  clearAiText,
 }: TaskDetailSheetProps) {
+  const [briefingExpanded, setBriefingExpanded] = useState(false);
+
   if (!task) return null;
 
   const maskedCustomer = mask(task.customer, "customerName");
@@ -51,8 +71,28 @@ export function TaskDetailSheet({
   const maskedPhone = mask(task.phone, "phone");
   const maskedTaxId = mask(task.businessNumber, "taxId");
 
+  const handleBriefing = async () => {
+    if (!aiLeadBriefing) return;
+    setBriefingExpanded(true);
+    try {
+      await aiLeadBriefing({
+        customerName: task.customer,
+        source: task.source,
+        campaign: task.campaign,
+        program: task.program,
+        priority: task.priority,
+        dueDate: task.due,
+      });
+    } catch {
+      // Error handled by hook
+    }
+  };
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(o) => {
+      if (!o && clearAiText) clearAiText();
+      onOpenChange(o);
+    }}>
       <SheetContent className="connection-sheet sm:max-w-lg">
         <SheetHeader className="connection-header">
           <div className="connection-title-row">
@@ -132,6 +172,57 @@ export function TaskDetailSheet({
                   Chương trình: {task.program}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* AI Lead Briefing Section */}
+          {aiLeadBriefing && (
+            <div className="ai-card">
+              <div className="ai-card-header">
+                <span><Bot size={13} /> AI Briefing</span>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {!aiText && !aiLoading && (
+                    <button
+                      type="button"
+                      className="ai-btn ai-btn-sm"
+                      onClick={handleBriefing}
+                      disabled={aiLoading}
+                    >
+                      <Sparkles size={11} /> Tóm tắt & Đề xuất
+                    </button>
+                  )}
+                  {aiText && (
+                    <button
+                      type="button"
+                      className="ai-btn ai-btn-sm"
+                      onClick={() => setBriefingExpanded(!briefingExpanded)}
+                    >
+                      {briefingExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                      {briefingExpanded ? "Thu gọn" : "Xem chi tiết"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {aiLoading && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div className="ai-shimmer" style={{ width: "90%" }} />
+                  <div className="ai-shimmer" style={{ width: "75%" }} />
+                  <div className="ai-shimmer" style={{ width: "60%" }} />
+                </div>
+              )}
+              {aiText && briefingExpanded && (
+                <div className={`ai-card-body${aiLoading ? " ai-typewriter" : ""}`}>
+                  {aiText}
+                </div>
+              )}
+              {aiError && (
+                <div className="ai-error">
+                  <AlertTriangle size={12} /> {aiError}
+                </div>
+              )}
+              <p className="ai-disclaimer">
+                <AlertTriangle size={9} /> Nội dung AI chỉ mang tính gợi ý, cần kiểm tra trước khi sử dụng.
+              </p>
             </div>
           )}
 
