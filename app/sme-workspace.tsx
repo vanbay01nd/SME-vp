@@ -23,6 +23,7 @@ import {
   ApiOption,
   AuditEntry,
   statusStyles,
+  isClosedStatus,
 } from "@/lib/constants";
 import { smeCall, responseSucceeded, delay } from "@/lib/sme-api";
 import { unwrapRecord, pick, asText, normalizeArray } from "@/lib/task-mapper";
@@ -178,7 +179,7 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
       toast.error("Chưa có token kết nối.");
       return;
     }
-    const eligible = actionTargets.filter((t) => t.status !== "Đã hoàn tất");
+    const eligible = actionTargets.filter((t) => !isClosedStatus(t.status));
     if (!eligible.length) {
       toast.info("Không có task đủ điều kiện để xử lý.");
       return;
@@ -597,8 +598,13 @@ export function SmeWorkspace({ displayName }: { displayName: string }) {
                         Đang xử lý <b>{taskStore.processingCount}</b>
                       </TabsTrigger>
                       <TabsTrigger value="done">
-                        Hoàn tất <b>{taskStore.doneCount}</b>
+                        Hoàn tất / Đã đóng <b>{taskStore.doneCount}</b>
                       </TabsTrigger>
+                      {taskStore.overdueCount > 0 && (
+                        <TabsTrigger value="overdue">
+                          Quá hạn <b>{taskStore.overdueCount}</b>
+                        </TabsTrigger>
+                      )}
                     </TabsList>
                   </Tabs>
 

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { smeCall } from "@/lib/sme-api";
-import { Task } from "@/lib/constants";
+import { Task, isClosedStatus } from "@/lib/constants";
 import { normalizeArray, toTask } from "@/lib/task-mapper";
 
 function delay(milliseconds: number) {
@@ -28,7 +28,8 @@ export function useTaskStore({ token, connected, username, membershipId }: {
   const sourceTasks = liveTasks;
   const pendingCount = sourceTasks.filter((task) => task.status === "Chờ tiếp nhận").length;
   const processingCount = sourceTasks.filter((task) => task.status === "Đang xử lý").length;
-  const doneCount = sourceTasks.filter((task) => task.status === "Đã hoàn tất").length;
+  const doneCount = sourceTasks.filter((task) => isClosedStatus(task.status)).length;
+  const overdueCount = sourceTasks.filter((task) => task.status === "Quá hạn").length;
 
   const filteredTasks = useMemo(() => {
     return sourceTasks.filter((task) => {
@@ -36,7 +37,8 @@ export function useTaskStore({ token, connected, username, membershipId }: {
         activeTab === "all" ||
         (activeTab === "pending" && task.status === "Chờ tiếp nhận") ||
         (activeTab === "processing" && task.status === "Đang xử lý") ||
-        (activeTab === "done" && task.status === "Đã hoàn tất");
+        (activeTab === "done" && isClosedStatus(task.status)) ||
+        (activeTab === "overdue" && task.status === "Quá hạn");
       const haystack = `${task.customer} ${task.cif} ${task.id} ${task.businessNumber} ${task.campaign} ${task.program}`.toLowerCase();
       return matchesTab && haystack.includes(query.trim().toLowerCase());
     });
@@ -52,7 +54,7 @@ export function useTaskStore({ token, connected, username, membershipId }: {
 
   const toggleAll = () => {
     const selectable = filteredTasks
-      .filter((task) => task.status !== "Đã hoàn tất")
+      .filter((task) => !isClosedStatus(task.status))
       .map((task) => task.id);
     setSelected((current) =>
       selectable.every((id) => current.includes(id))
@@ -126,6 +128,7 @@ export function useTaskStore({ token, connected, username, membershipId }: {
     pendingCount,
     processingCount,
     doneCount,
+    overdueCount,
     filteredTasks,
     toggleTask,
     toggleAll,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { AuditEntry, AuditFilter, Task } from "@/lib/constants";
+import { AuditEntry, AuditFilter, Task, isClosedStatus } from "@/lib/constants";
 
 export function useAudit({
   sourceTasks,
@@ -64,7 +64,7 @@ export function useAudit({
         .map((entry) => entry.taskId)
     );
     const retryIds = sourceTasks
-      .filter((task) => failed.has(task.id) && task.status !== "Đã hoàn tất")
+      .filter((task) => failed.has(task.id) && !isClosedStatus(task.status))
       .map((task) => task.id);
     setSelected(retryIds);
     if (onViewChange) onViewChange();

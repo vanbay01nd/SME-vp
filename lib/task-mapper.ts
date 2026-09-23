@@ -52,19 +52,60 @@ export function unwrapRecord(value: unknown, depth = 0): JsonRecord {
 }
 
 export function classifyStatus(record: JsonRecord): TaskStatus {
-  const value = JSON.stringify({
-    taskStatus: record.taskStatus,
-    status: record.status,
-    taskStatusName: record.taskStatusName,
-    statusName: record.statusName,
-    taskStatusGroup: record.taskStatusGroup,
-  });
-  if (/DONE|COMPLETED|HOÀN TẤT|HOAN TAT|ĐÃ XỬ LÝ|DA XU LY/i.test(value)) {
+  const taskStatus = String(
+    record.taskStatus || record.status || record.taskStatusName || record.statusName || "",
+  ).toUpperCase().trim();
+
+  // 1. Đã hoàn tất / Đã duyệt hoàn thành / Đã kết thúc
+  if (
+    taskStatus === "END" ||
+    taskStatus === "ACCEPT_COMPLETE" ||
+    taskStatus === "DONE" ||
+    taskStatus === "COMPLETED" ||
+    taskStatus === "COMPLETE" ||
+    /^(END|ACCEPT_COMPLETE|DONE|COMPLETED)$/i.test(taskStatus) ||
+    /HOÀN TẤT|HOAN TAT|ĐÃ XỬ LÝ|DA XU LY|ĐÃ KẾT THÚC|DA KET THUC|ĐÃ DUYỆT/i.test(taskStatus)
+  ) {
     return "Đã hoàn tất";
   }
-  if (/WAITING_RECEIVE|NEW|CHỜ|CHO|PENDING|TIẾP NHẬN|TIEP NHAN/i.test(value)) {
+
+  // 2. Từ chối hoàn tất
+  if (taskStatus === "REJECT_COMPLETE" || /REJECT|TỪ CHỐI|TU CHOI/i.test(taskStatus)) {
+    return "Từ chối hoàn tất";
+  }
+
+  // 3. Không hoàn tất / Đã hủy
+  if (
+    taskStatus === "NOT_COMPLETE" ||
+    taskStatus === "CANCEL" ||
+    taskStatus === "CANCELLED" ||
+    /NOT_COMPLETE|KHÔNG HOÀN TẤT|KHONG HOAN TAT|ĐÃ HỦY|DA HUY/i.test(taskStatus)
+  ) {
+    return "Không hoàn tất";
+  }
+
+  // 4. Chờ tiếp nhận / Mới
+  if (
+    taskStatus === "NEW" ||
+    taskStatus === "WAITING_RECEIVE" ||
+    taskStatus === "ASSIGNED" ||
+    taskStatus === "PENDING" ||
+    /WAITING_RECEIVE|NEW|CHỜ|CHO|PENDING|TIẾP NHẬN|TIEP NHAN|MỚI|MOI/i.test(taskStatus)
+  ) {
     return "Chờ tiếp nhận";
   }
+
+  // 5. Quá hạn xử lý
+  const expiryRaw = pick(record, "expiryDate", "dueDate", "deadline");
+  if (expiryRaw) {
+    const expDateStr = String(expiryRaw).slice(0, 10);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (expDateStr < todayStr && (taskStatus === "PROCESSING" || taskStatus === "IN_PROGRESS")) {
+      return "Quá hạn";
+    }
+  }
+
+  // 6. Đang xử lý
   return "Đang xử lý";
 }
 
@@ -162,8 +203,8 @@ export function toTask(record: JsonRecord, index: number): Task | null {
       pick(record, "createdAt", "createdDate", "creationDate", "createdTime"),
     ),
     due:
-      status === "Đã hoàn tất"
-        ? "Đã xong"
+      status === "Đã hoàn tất" || status === "Từ chối hoàn tất" || status === "Không hoàn tất"
+        ? "Đã đóng"
         : formatApiDate(
             pick(record, "expiryDate", "dueDate", "deadline", "expectedDate", "endDate"),
           ),

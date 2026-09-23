@@ -5,6 +5,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, CircleAlert, ChevronRight, ListTodo } from "lucide-react";
+import { isClosedStatus } from "@/lib/constants";
 
 export interface Task {
   id: string;
@@ -56,7 +57,7 @@ export function TaskTable({
                 checked={
                   tasks.length > 0 &&
                   tasks
-                    .filter((task) => task.status !== "Đã hoàn tất")
+                    .filter((task) => !isClosedStatus(task.status))
                     .every((task) => selected.includes(task.id))
                 }
                 onCheckedChange={toggleAll}
@@ -76,7 +77,7 @@ export function TaskTable({
               <TableCell>
                 <Checkbox
                   aria-label={`Chọn task ${task.id}`}
-                  disabled={task.status === "Đã hoàn tất"}
+                  disabled={isClosedStatus(task.status)}
                   checked={selected.includes(task.id)}
                   onCheckedChange={() => toggleTask(task.id)}
                 />
@@ -123,7 +124,7 @@ export function TaskTable({
                   size="sm"
                   onClick={() => openTask(task)}
                 >
-                  {task.status === "Đã hoàn tất" ? "Xem" : "Xử lý"}
+                  {isClosedStatus(task.status) ? "Xem" : "Xử lý"}
                   <ChevronRight size={14} />
                 </Button>
               </TableCell>

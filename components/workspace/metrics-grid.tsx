@@ -67,9 +67,9 @@ export function MetricsGrid({
             <CheckCircle2 size={20} />
           </div>
           <div>
-            <span>Đã hoàn tất</span>
+            <span>Hoàn tất / Đã đóng</span>
             <strong>{doneCount}</strong>
-            <small className="text-green">Theo dữ liệu lần quét gần nhất</small>
+            <small className="text-green">Đã kết thúc hoặc duyệt hoàn thành</small>
           </div>
           {totalTasks > 0 && (
             <div className="metric-progress">

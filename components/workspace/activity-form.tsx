@@ -51,7 +51,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { Task, ApiOption, noteVariables } from "@/lib/constants";
+import { Task, ApiOption, noteVariables, isClosedStatus } from "@/lib/constants";
 import { noteTemplates, renderNoteTemplate } from "@/lib/note-templates";
 import { maskName, maskCif, maskPhone } from "@/lib/privacy";
 import type { NoteContext, BatchNoteContext } from "@/lib/ai-prompts";
@@ -216,7 +216,7 @@ export function ActivityForm({
 
   // Preflight calculations
   const eligibleTargets = useMemo(
-    () => actionTargets.filter((task) => task.status !== "Đã hoàn tất"),
+    () => actionTargets.filter((task) => !isClosedStatus(task.status)),
     [actionTargets],
   );
 

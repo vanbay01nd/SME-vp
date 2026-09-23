@@ -25,7 +25,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { Task } from "@/lib/constants";
+import { Task, isClosedStatus } from "@/lib/constants";
 import type { BriefingContext } from "@/lib/ai-prompts";
 
 export interface TaskDetailSheetProps {
@@ -240,16 +240,27 @@ export function TaskDetailSheet({
                 <BriefcaseBusiness size={14} /> Tra cứu nhà thầu
               </Button>
             )}
-            <Button
-              className="vp-primary flex-1"
-              size="sm"
-              onClick={() => {
-                onOpenChange(false);
-                onOpenAction(task);
-              }}
-            >
-              <Sparkles size={14} /> Tạo Activity <ChevronRight size={14} />
-            </Button>
+            {!isClosedStatus(task.status) ? (
+              <Button
+                className="vp-primary flex-1"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  onOpenAction(task);
+                }}
+              >
+                <Sparkles size={14} /> Tạo Activity <ChevronRight size={14} />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 opacity-70 cursor-not-allowed"
+                disabled
+              >
+                Đã đóng / Không thể tạo Activity
+              </Button>
+            )}
           </div>
         </div>
       </SheetContent>

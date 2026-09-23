@@ -1,5 +1,11 @@
 export type JsonRecord = Record<string, unknown>;
-export type TaskStatus = "Chờ tiếp nhận" | "Đang xử lý" | "Đã hoàn tất";
+export type TaskStatus =
+  | "Chờ tiếp nhận"
+  | "Đang xử lý"
+  | "Đã hoàn tất"
+  | "Từ chối hoàn tất"
+  | "Không hoàn tất"
+  | "Quá hạn";
 export type WorkspaceView = "tasks" | "performance" | "contractor" | "audit";
 
 export type Task = {
@@ -91,7 +97,14 @@ export const statusStyles: Record<TaskStatus, string> = {
   "Chờ tiếp nhận": "border-amber-200 bg-amber-50 text-amber-700",
   "Đang xử lý": "border-blue-200 bg-blue-50 text-blue-700",
   "Đã hoàn tất": "border-emerald-200 bg-emerald-50 text-emerald-700",
+  "Quá hạn": "border-red-200 bg-red-50 text-red-700",
+  "Từ chối hoàn tất": "border-rose-200 bg-rose-50 text-rose-700",
+  "Không hoàn tất": "border-slate-300 bg-slate-100 text-slate-700",
 };
+
+export const isClosedStatus = (status: string): boolean =>
+  status === "Đã hoàn tất" || status === "Từ chối hoàn tất" || status === "Không hoàn tất";
+
 
 export const callStatusLabels: Record<string, string> = {
   ANSWERED: "Nghe máy",
